@@ -150,13 +150,18 @@ class _RefreshListViewState extends State<RefreshListView> {
       // 显示加载更多
       return _buildProgressIndicator();
     }
+    return buildListTile(index);
+  }
+
+  /// 构建列表Item内容
+  ListTile buildListTile(int index) {
     return ListTile(
-      title: Text(articleList[index].title),
-      leading: Icon(
-        Icons.favorite,
-        color: Colors.red,
-      ),
-    );
+    title: Text(articleList[index].title),
+    leading: Icon(
+      Icons.favorite,
+      color: Colors.red,
+    ),
+  );
   }
 
   /// 底部加载更多
