@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:wanandroid/config/url_config.dart';
 import 'package:wanandroid/first_page/home_page_article_item.dart';
 
@@ -90,7 +91,7 @@ class _RefreshListViewState extends State<RefreshListView> {
           onRefresh: _handleRefresh,
           color: Colors.blue,
           child: ListView.builder(
-            itemCount: articleList.length  + 1,
+            itemCount: articleList.length + 1,
             controller: _scrollController,
             itemBuilder: buildItemBuilder,
           ),
@@ -102,7 +103,7 @@ class _RefreshListViewState extends State<RefreshListView> {
 
   /// 构建 loading cover
   Widget buildCoverLayout() {
-    if(showLoadingCover){
+    if (showLoadingCover) {
       return Container(
         width: double.infinity,
         height: double.infinity,
@@ -115,19 +116,19 @@ class _RefreshListViewState extends State<RefreshListView> {
                 strokeWidth: 2.0,
                 valueColor: AlwaysStoppedAnimation(Colors.blue),
               ),
-              SizedBox(height: 20.0,),
+              SizedBox(
+                height: 20.0,
+              ),
               Text(
                 'Loading...',
-                style: TextStyle(
-                    color: Colors.grey[700]
-                ),
+                style: TextStyle(color: Colors.grey[700]),
               )
             ],
           ),
         ),
       );
-    }else{
-      return Container(height:0.0,width:0.0);
+    } else {
+      return Container(height: 0.0, width: 0.0);
     }
   }
 
@@ -146,7 +147,7 @@ class _RefreshListViewState extends State<RefreshListView> {
             ),
           ));
     }
-    if(index == articleList.length){
+    if (index == articleList.length) {
       // 显示加载更多
       return _buildProgressIndicator();
     }
@@ -154,19 +155,66 @@ class _RefreshListViewState extends State<RefreshListView> {
   }
 
   /// 构建列表Item内容
-  ListTile buildListTile(int index) {
-    return ListTile(
-    title: Text(articleList[index].title),
-    leading: Icon(
-      Icons.favorite,
-      color: Colors.red,
-    ),
-  );
+  Widget buildListTile(int index) {
+    var _isFavorite = articleList[index].collect;
+    var _title = articleList[index].title;
+    var _author = articleList[index].author;
+    var _niceDate = articleList[index].niceDate;
+
+    return Card(
+        clipBehavior: Clip.antiAlias,
+        color: Colors.white,
+        elevation: 4.0,
+        margin: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+        child: ListTile(
+          onTap: () {
+            Fluttertoast.showToast(
+                msg: _title, backgroundColor: Colors.black54);
+          },
+          leading: IconButton(
+              icon: Icon(
+                _isFavorite ? Icons.favorite : Icons.favorite_border,
+                color: Colors.blueAccent,
+              ),
+              onPressed: () {
+                Fluttertoast.showToast(msg: 'Favorite');
+              }),
+          title: Padding(
+            padding: const EdgeInsets.only(top: 10.0),
+            child: SizedBox(
+              height: 40.0,
+              child: Text(
+                _title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    fontSize: 16.0,
+                    color: Colors.black,
+                    fontWeight: FontWeight.w600),
+              ),
+            )
+          ),
+          subtitle: Stack(
+            alignment: AlignmentDirectional.centerStart,
+            textDirection: TextDirection.ltr,
+            fit: StackFit.loose,
+            children: <Widget>[
+              Padding(
+                child: Text('by:$_author'),
+                padding: const EdgeInsets.only(top: 10.0, bottom: 5.0),
+              ),
+              Positioned(
+                right: 0.0,
+                child: Text(_niceDate),
+              )
+            ],
+          ),
+        ));
   }
 
   /// 底部加载更多
   Widget _buildProgressIndicator() {
-    if(_hasMore){
+    if (_hasMore) {
       return Padding(
         padding: const EdgeInsets.all(8.0),
         child: Center(
@@ -185,16 +233,13 @@ class _RefreshListViewState extends State<RefreshListView> {
               ),
               Text(
                 '拼命加载中...',
-                style: TextStyle(
-                  color: Colors.grey[700],
-                  fontSize: 14.0
-                ),
+                style: TextStyle(color: Colors.grey[700], fontSize: 14.0),
               )
             ],
           ),
         ),
       );
-    }else{
+    } else {
       // 没有更多数据了
       return Padding(
         padding: const EdgeInsets.all(8.0),
@@ -227,7 +272,7 @@ class _RefreshListViewState extends State<RefreshListView> {
         isLoading = true;
       });
       HomePageArticleItem newData = await _getArticleData();
-      if(newData != null){
+      if (newData != null) {
         _hasMore = (newData.data.curPage <= newData.data.total);
         if (this.mounted) {
           setState(() {
@@ -237,7 +282,7 @@ class _RefreshListViewState extends State<RefreshListView> {
             isLoading = false;
           });
         }
-      }else{
+      } else {
         // 请求异常，返回的数据为null
       }
     } else if (!isLoading && !_hasMore) {
@@ -268,6 +313,4 @@ class _RefreshListViewState extends State<RefreshListView> {
       print('请求完成');
     }
   }
-
-
 }
