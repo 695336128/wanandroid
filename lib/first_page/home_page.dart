@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:wanandroid/config/url_config.dart';
+import 'package:wanandroid/first_page/home_list.dart';
 import 'package:wanandroid/first_page/home_page_article_item.dart';
 
 /// User: Pluto
@@ -48,7 +49,6 @@ class _RefreshListViewState extends State<RefreshListView> {
   var isLoading = false; // 是否正在请求数据中
   var _hasMore = true; // 是否还有更多的数据可以加载
   var showLoadingCover = true; // 是否显示Cover页面(loading)
-  ScrollController _scrollController;
   List<Article> articleList = new List();
   HomePageArticleItem articleData;
 
@@ -56,29 +56,10 @@ class _RefreshListViewState extends State<RefreshListView> {
   void initState() {
     super.initState();
     _getMoreData();
-    _scrollController = ScrollController();
-    _scrollController.addListener(() {
-      // 如果下拉的当前位置到scroll的最下面
-      if (_scrollController.position.pixels ==
-          _scrollController.position.maxScrollExtent) {
-        _getMoreData();
-      }
-      if (_scrollController.offset < 1000 && showToTopBtn) {
-        setState(() {
-          showToTopBtn = false;
-        });
-      } else if (_scrollController.offset >= 1000 && !showToTopBtn) {
-        setState(() {
-          showToTopBtn = true;
-        });
-      }
-    });
   }
 
   @override
   void dispose() {
-    // 避免内存泄露
-    _scrollController.dispose();
     super.dispose();
   }
 
@@ -90,10 +71,11 @@ class _RefreshListViewState extends State<RefreshListView> {
         RefreshIndicator(
           onRefresh: _handleRefresh,
           color: Colors.blue,
-          child: ListView.builder(
-            itemCount: articleList.length + 1,
-            controller: _scrollController,
-            itemBuilder: buildItemBuilder,
+          child: HomeListView(
+            articleList:articleList,
+            getMoreData:_getMoreData,
+              hasMore: _hasMore,
+            isLoading: isLoading
           ),
         ),
         buildCoverLayout(),
@@ -129,124 +111,6 @@ class _RefreshListViewState extends State<RefreshListView> {
       );
     } else {
       return Container(height: 0.0, width: 0.0);
-    }
-  }
-
-  /// 构建列表Item
-  Widget buildItemBuilder(BuildContext context, int index) {
-    if (index == 0 && index != articleList.length) {
-      //　显示headview
-      return Center(
-          key: Key('ListHeader'),
-          child: Container(
-            color: Colors.blue[100],
-            width: double.infinity,
-            height: 120.0,
-            child: Center(
-              child: Text('此处应该有个Banner'),
-            ),
-          ));
-    }
-    if (index == articleList.length) {
-      // 显示加载更多
-      return _buildProgressIndicator();
-    }
-    return buildListTile(index);
-  }
-
-  /// 构建列表Item内容
-  Widget buildListTile(int index) {
-    var _isFavorite = articleList[index].collect;
-    var _title = articleList[index].title;
-    var _author = articleList[index].author;
-    var _niceDate = articleList[index].niceDate;
-
-    return Card(
-        clipBehavior: Clip.antiAlias,
-        color: Colors.white,
-        elevation: 4.0,
-        margin: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-        child: ListTile(
-          onTap: () {
-            Fluttertoast.showToast(
-                msg: _title, backgroundColor: Colors.black54);
-          },
-          leading: IconButton(
-              icon: Icon(
-                _isFavorite ? Icons.favorite : Icons.favorite_border,
-                color: Colors.blueAccent,
-              ),
-              onPressed: () {
-                Fluttertoast.showToast(msg: 'Favorite');
-              }),
-          title: Padding(
-            padding: const EdgeInsets.only(top: 10.0),
-            child: SizedBox(
-              height: 40.0,
-              child: Text(
-                _title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                    fontSize: 16.0,
-                    color: Colors.black,
-                    fontWeight: FontWeight.w600),
-              ),
-            )
-          ),
-          subtitle: Stack(
-            alignment: AlignmentDirectional.centerStart,
-            textDirection: TextDirection.ltr,
-            fit: StackFit.loose,
-            children: <Widget>[
-              Padding(
-                child: Text('by:$_author'),
-                padding: const EdgeInsets.only(top: 10.0, bottom: 5.0),
-              ),
-              Positioned(
-                right: 0.0,
-                child: Text(_niceDate),
-              )
-            ],
-          ),
-        ));
-  }
-
-  /// 底部加载更多
-  Widget _buildProgressIndicator() {
-    if (_hasMore) {
-      return Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Opacity(
-                opacity: isLoading ? 1.0 : 0.0,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.0,
-                  valueColor: AlwaysStoppedAnimation(Colors.blue),
-                ),
-              ),
-              SizedBox(
-                width: 20.0,
-              ),
-              Text(
-                '拼命加载中...',
-                style: TextStyle(color: Colors.grey[700], fontSize: 14.0),
-              )
-            ],
-          ),
-        ),
-      );
-    } else {
-      // 没有更多数据了
-      return Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Center(
-          child: Text('没有更多数据了'),
-        ),
-      );
     }
   }
 
